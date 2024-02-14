@@ -1,7 +1,6 @@
 use std::time::Duration;
-use humantime::{format_duration, parse_duration};
-use poise::serenity_prelude::{CreateEmbed, Mentionable};
-use poise::serenity_prelude as serenity;
+use humantime::format_duration;
+use poise::serenity_prelude::CreateEmbed;
 use poise::CreateReply;
 
 use crate::Error;

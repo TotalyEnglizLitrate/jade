@@ -24,16 +24,17 @@ async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> ShuttleS
             commands: vec![
                 commands::misc::ping(),
                 commands::misc::help(),
-                commands::moderation::timeout(),
-                commands::moderation::untimeout(),
-                commands::moderation::ban(),
-                commands::moderation::unban(),
-                commands::moderation::kick(),
-                commands::moderation::role(),
-                commands::moderation::lock(),
-                commands::moderation::unlock(),
-                commands::moderation::viewlock(),
-                commands::moderation::unviewlock()
+                commands::moderation::user::timeout(),
+                commands::moderation::user::untimeout(),
+                commands::moderation::user::ban(),
+                commands::moderation::user::unban(),
+                commands::moderation::user::kick(),
+                commands::moderation::user::role(),
+                commands::moderation::channel::lock(),
+                commands::moderation::channel::unlock(),
+                commands::moderation::channel::viewlock(),
+                commands::moderation::channel::unviewlock(),
+                commands::moderation::purge::purge()
             ],
             prefix_options: poise::PrefixFrameworkOptions { prefix: Some("j.".into()), ..Default::default()},
             ..Default::default()

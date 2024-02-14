@@ -950,6 +950,7 @@ dependencies = [
  "humantime",
  "once_cell",
  "poise",
+ "regex",
  "shuttle-runtime",
  "shuttle-secrets",
  "shuttle-serenity",
