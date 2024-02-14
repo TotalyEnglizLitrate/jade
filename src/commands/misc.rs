@@ -37,6 +37,7 @@ pub async fn help(
     #[description = "Specific command to show help about"] command: Option<String>,
 ) -> Result<(), Error> {
     let config = poise::builtins::HelpConfiguration {
+        show_subcommands: true,
         ..Default::default()
     };
     poise::builtins::help(ctx, command.as_deref(), config).await?;

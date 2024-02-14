@@ -29,7 +29,7 @@ async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> ShuttleS
                 commands::moderation::user::ban(),
                 commands::moderation::user::unban(),
                 commands::moderation::user::kick(),
-                commands::moderation::user::role(),
+                commands::moderation::role::role(),
                 commands::moderation::channel::lock(),
                 commands::moderation::channel::unlock(),
                 commands::moderation::channel::viewlock(),
