@@ -47,7 +47,12 @@ async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> ShuttleS
         })
         .build();
 
-    let client = ClientBuilder::new(discord_token, GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT)
+    let client = ClientBuilder::new(
+        discord_token,
+         GatewayIntents::non_privileged() |
+         GatewayIntents::MESSAGE_CONTENT |
+         GatewayIntents::GUILD_MEMBERS |
+         GatewayIntents::GUILD_PRESENCES)
         .framework(framework)
         .await
         .map_err(shuttle_runtime::CustomError::new)?;
