@@ -84,16 +84,20 @@ pub async fn create(
 ) -> Result<(), Error> {
     let colour = colour.unwrap_or_else(|| String::from("000000"));
     let hex: serenity::Colour;
+    let colour_: &str;
     if regex::Regex::new("^#?[0-9a-fA-F]{6}$")
         .unwrap()
         .is_match(&colour)
     {
         if colour.len() == 7 {
-            let colour = &colour[1..6];
+            colour_ = &colour[1..6];
         }
-        hex = serenity::Colour(u32::from_str_radix(&colour, 16).unwrap());
+        else {
+            colour_ = &colour;    
+        }
+        hex = serenity::Colour(u32::from_str_radix(&colour_, 16).unwrap());
     } else {
-        hex = serenity::Colour(u32::from_str_radix(&colour, 16).unwrap());
+        hex = serenity::Colour(0u32);
     }
     let mentionable = mentionable.unwrap_or_else(|| false);
     let hoisted = hoisted.unwrap_or_else(|| false);
@@ -354,21 +358,27 @@ pub async fn edit(
 ) -> Result<(), Error> {
     let colour = colour.unwrap_or_else(|| String::from("000000"));
     let hex: serenity::Colour;
+    let colour_: &str;
     if regex::Regex::new("^#?[0-9a-fA-F]{6}$")
         .unwrap()
         .is_match(&colour)
     {
         if colour.len() == 7 {
-            let colour = &colour[1..6];
+            colour_ = &colour[1..6];
         }
-        hex = serenity::Colour(u32::from_str_radix(&colour, 16).unwrap());
-    } else {
-        hex = serenity::Colour(u32::from_str_radix(&colour, 16).unwrap());
+        else {
+            colour_ = &colour;
+        }
+        hex = serenity::Colour(u32::from_str_radix(&colour_, 16).unwrap());
+    }
+    else {
+        hex = serenity::Colour(0u32);   
     }
     let rl_edit = serenity::EditRole::new()
         .colour(hex)
         .hoist(hoisted.unwrap_or_else(|| role.clone().hoist))
         .name(&name.unwrap_or_else(|| role.clone().name));
-    &role.edit(ctx.http(), rl_edit);
+    role.edit(ctx.http(), rl_edit).await?;
+    ctx.say("Success!").await?;
     Ok(())
 }
