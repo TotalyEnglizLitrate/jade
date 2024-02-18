@@ -308,7 +308,7 @@ pub async fn rall(
         msg.edit(
             ctx.http(),
             serenity::EditMessage::default()
-            .content(format!("Removing **{}** from {} users", &role.id, &members_with_role.len()))
+            .content(format!("Removing **{}** from {} users", &role.name, &members_with_role.len()))
             .suppress_embeds(true)
             .components(vec![])
         ).await?;
@@ -324,7 +324,7 @@ pub async fn rall(
             serenity::EditMessage::default()
             .content(format!(
                 "Removed **{}** from {} users, Failed to remove role from {} users",
-                &role.id,
+                &role.name,
                 &members_with_role.len() - fail as usize,
                 &fail))
         ).await?;

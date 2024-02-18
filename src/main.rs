@@ -34,7 +34,8 @@ async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> ShuttleS
                 commands::moderation::channel::unlock(),
                 commands::moderation::channel::viewlock(),
                 commands::moderation::channel::unviewlock(),
-                commands::moderation::purge::purge()
+                commands::moderation::purge::purge(),
+                commands::moderation::channel::slowmode()
             ],
             prefix_options: poise::PrefixFrameworkOptions { prefix: Some("j.".into()), ..Default::default()},
             ..Default::default()

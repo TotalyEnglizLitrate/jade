@@ -1,3 +1,4 @@
+use humantime::parse_duration;
 use poise::serenity_prelude as serenity;
 use poise::serenity_prelude::Mentionable;
 // use poise::CreateReply;
@@ -136,32 +137,6 @@ pub async fn unlock(
 }
 
 
-/// Ban a member
-#[poise::command(
-    slash_command,
-    prefix_command,
-    required_permissions = "BAN_MEMBERS",
-    guild_only = true
-    )
-]
-pub async fn ban(
-    ctx: Context<'_>,
-    #[description = "Member to ban"] user: serenity::User,
-    #[description = "Reason"] mut reason: Option<String>
-) -> Result<(), Error> {
-    reason = Some(reason.unwrap_or_else(|| format!("Requested by {}", &ctx.author().name)));
-    ctx.http()
-        .ban_user(
-            ctx.guild_id().unwrap(),
-            user.id,
-            0,
-            reason.as_deref()
-            ).await?;
-    ctx.say(format!("Successfully banned {}", user.mention())).await?;
-    Ok(())
-}
-
-
 /// Viewlock a channel - If both user and role mentioned only locks only for role
 #[poise::command(
     slash_command,
@@ -288,5 +263,34 @@ pub async fn unviewlock(
             }
             ).await?;
     }
+    Ok(())
+}
+
+
+/// Set the slowmode of a channel
+#[poise::command(
+    slash_command,
+    prefix_command,
+    required_permissions = "MANAGE_CHANNELS",
+    guild_only = true
+    )
+]
+pub async fn slowmode(
+    ctx: Context<'_>,
+    #[description = "The channel for which the slowmode is to be set"] channel: Option<serenity::GuildChannel>,
+    #[description = "The slowmode to set"] time: String
+) -> Result<(), Error> {
+    let channel_ = ctx.guild_channel().await.unwrap();
+    let mut channel = channel.unwrap_or_else(|| channel_);
+    let time_ = parse_duration(&time).unwrap().as_secs();
+    if time_ > 21600 {
+        ctx.say("Too high a slowmode entered, a maximum of 6 hours is allowed").await?;
+        return Ok(());
+    }
+    channel.edit(
+        &ctx.http(),
+        serenity::EditChannel::new().rate_limit_per_user(time_ as u16)
+    ).await?;
+    ctx.say(format!("Successfully set slowmode in {} to {}", channel.mention(), time)).await?;
     Ok(())
 }
