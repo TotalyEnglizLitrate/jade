@@ -6,7 +6,6 @@ use regex;
 use crate::Error;
 use crate::Context;
 
-
 /// Base command for purging messages
 #[poise::command(
     slash_command,
@@ -35,6 +34,7 @@ pub async fn all(
     #[description = "No. of Messages to purge"] amount: Option<u8>
 ) -> Result<(), Error> {
     let amount = amount.unwrap_or_else(|| 100);
+    if amount == 0 {return Ok(())}
     let channel = ctx.guild_channel().await.unwrap();
 
     let messages: Vec<serenity::MessageId> = channel.messages(
@@ -238,10 +238,10 @@ pub async fn reactions(
         serenity::GetMessages::new().limit(amount)
     ).await?
     .into_iter()
-    .map(|msg| msg.id)
+    .filter_map(|msg| if msg.reactions.len() != 0 {Some(msg.id)} else {None})
     .collect();
 
-    ctx.say(format!("Purging reactions in {} messages", amount)).await?;
+    ctx.say(format!("Purging reactions in {} messages", &messages.len())).await?;
     for msgid in &messages {
         channel.delete_reactions(&ctx.http(), msgid).await?;
     }

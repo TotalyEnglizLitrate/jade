@@ -1,5 +1,6 @@
 use humantime::{format_duration, parse_rfc3339};
 use poise;
+use poise::serenity_prelude::CacheHttp;
 use poise::serenity_prelude as serenity;
 use std::time::Duration;
 use std::vec;
@@ -9,15 +10,15 @@ use crate::Error;
 
 fn highest_role(ctx: &Context<'_>, member: &serenity::Member) -> serenity::Role {
     member
-        .highest_role_info(ctx.cache())
+        .highest_role_info(ctx.cache().unwrap())
         .unwrap_or_default()
         .0
-        .to_role_cached(ctx.cache())
+        .to_role_cached(ctx.cache().unwrap())
         .unwrap_or_else(|| {
             ctx.guild_id()
                 .unwrap()
                 .everyone_role()
-                .to_role_cached(ctx.cache())
+                .to_role_cached(ctx.cache().unwrap())
                 .unwrap()
         })
 }
@@ -30,39 +31,8 @@ fn highest_role(ctx: &Context<'_>, member: &serenity::Member) -> serenity::Role 
     guild_only = true,
     subcommands("create", "add", "remove", "info", "rall", "edit")
 )]
-pub async fn role(
-    ctx: Context<'_>,
-    #[description = "Member to add/remove role to/from"] user: serenity::User,
-    #[description = "Role to add/remove"] role: serenity::Role,
-) -> Result<(), Error> {
-    let member = ctx
-        .http()
-        .get_member(ctx.guild_id().unwrap(), user.id)
-        .await?;
-    let highest_role = highest_role(&ctx, &ctx.author_member().await.unwrap());
-    if role.position >= highest_role.position {
-        ctx.say("Cannot assign role higher than your highest role")
-            .await?;
-        return Ok(());
-    }
-    if user
-        .has_role(ctx.http(), ctx.guild_id().unwrap(), role.id)
-        .await?
-    {
-        member.remove_role(ctx.http(), role.id).await?;
-        ctx.say(format!(
-            "Successfully removed role **{}** from **{}**",
-            role.name, user.name
-        ))
-        .await?;
-    } else {
-        member.add_role(ctx.http(), role.id).await?;
-        ctx.say(format!(
-            "Successfully added role **{}** to **{}**",
-            role.name, user.name
-        ))
-        .await?;
-    }
+pub async fn role(ctx: Context<'_>,) -> Result<(), Error> {
+    ctx.say("This is the base command and is not to be run independently").await?;
     Ok(())
 }
 
@@ -82,7 +52,7 @@ pub async fn create(
     >,
     #[description = "Whether the role should be hoisted - defaults to false"] hoisted: Option<bool>,
 ) -> Result<(), Error> {
-    let colour = colour.unwrap_or_else(|| String::from("000000"));
+    let colour: String = colour.unwrap_or_else(|| String::from("000000"));
     let hex: serenity::Colour;
     let colour_: &str;
     if regex::Regex::new("^#?[0-9a-fA-F]{6}$")
@@ -99,9 +69,9 @@ pub async fn create(
     } else {
         hex = serenity::Colour(0u32);
     }
-    let mentionable = mentionable.unwrap_or_else(|| false);
-    let hoisted = hoisted.unwrap_or_else(|| false);
-    let role = serenity::EditRole::new()
+    let mentionable: bool = mentionable.unwrap_or_else(|| false);
+    let hoisted: bool = hoisted.unwrap_or_else(|| false);
+    let role: serenity::EditRole<'_> = serenity::EditRole::new()
         .name(&name)
         .colour(hex)
         .mentionable(mentionable)
@@ -127,31 +97,21 @@ pub async fn add(
     #[description = "Member to add role to"] user: serenity::User,
     #[description = "Role to add"] role: serenity::Role,
 ) -> Result<(), Error> {
-    let member = ctx
-        .http()
-        .get_member(ctx.guild_id().unwrap(), user.id)
-        .await?;
-    let highest_role = highest_role(&ctx, &ctx.author_member().await.unwrap());
+    let guild_id: serenity::GuildId = ctx.guild_id().unwrap();
+    let member: serenity::Member = ctx.cache().member(guild_id, user.id).unwrap().clone();
+    let highest_role: serenity::Role = highest_role(&ctx, &ctx.author_member().await.unwrap());
     if role.position >= highest_role.position {
         ctx.say("Cannot assign role higher than your highest role")
             .await?;
         return Ok(());
     }
-    if user
-        .has_role(ctx.http(), ctx.guild_id().unwrap(), role.id)
-        .await?
+    if member.roles(ctx.cache()).unwrap().contains(&role)
     {
-        ctx.say(format!(
-            "**{}** already has role **{}**",
-            user.name, role.name
-        ))
+        ctx.say(format!("**{}** already has role **{}**", user.name, role.name))
         .await?;
     } else {
         member.add_role(ctx.http(), role.id).await?;
-        ctx.say(format!(
-            "Successfully added role **{}** to **{}**",
-            role.name, user.name
-        ))
+        ctx.say(format!("Successfully added role **{}** to **{}**",role.name, user.name))
         .await?;
     }
     Ok(())
@@ -169,13 +129,11 @@ pub async fn remove(
     #[description = "Member to remove role from"] user: serenity::User,
     #[description = "Role to remove"] role: serenity::Role,
 ) -> Result<(), Error> {
-    let member = ctx
-        .http()
-        .get_member(ctx.guild_id().unwrap(), user.id)
-        .await?;
-    let highest_role = highest_role(&ctx, &ctx.author_member().await.unwrap());
+    let guild_id: serenity::GuildId = ctx.guild_id().unwrap();
+    let member: serenity::Member = ctx.cache().member(guild_id, user.id).unwrap().clone();
+    let highest_role: serenity::Role = highest_role(&ctx, &ctx.author_member().await.unwrap());
     if role.position >= highest_role.position {
-        ctx.say("Cannot assign role higher than your highest role")
+        ctx.say("Cannot remove role higher than your highest role")
             .await?;
         return Ok(());
     }
@@ -184,16 +142,10 @@ pub async fn remove(
         .await?
     {
         member.remove_role(ctx.http(), role.id).await?;
-        ctx.say(format!(
-            "Successfully removed role **{}** from **{}**",
-            role.name, user.name
-        ))
+        ctx.say(format!("Successfully removed role **{}** from **{}**", role.name, user.name))
         .await?;
     } else {
-        ctx.say(format!(
-            "**{}** already has role **{}**",
-            user.name, role.name
-        ))
+        ctx.say(format!("**{}** doesn't have role **{}**", user.name, role.name))
         .await?;
     }
     Ok(())
@@ -205,14 +157,14 @@ pub async fn info(
     ctx: Context<'_>,
     #[description = "Role whose info you want to get"] role: serenity::Role,
 ) -> Result<(), Error> {
-    let guild = &ctx.cache().guild(&ctx.guild_id().unwrap()).unwrap().clone();
+    let guild: &serenity::Guild = &ctx.cache().guild(&ctx.guild_id().unwrap()).unwrap().clone();
     let membercount: u64;
     if &ctx.guild_id().unwrap().everyone_role() == &role.id {
         membercount = guild.member_count;
     }
     else {
-        let members_map = guild.members.clone();
-        let members: Vec<&serenity::Member> = members_map
+        let members: Vec<&serenity::Member> = guild
+        .members
         .iter()
         .filter_map(|(_, member)| if member.roles.contains(&role.id) {Some(member)} else {None})
         .collect();
@@ -259,9 +211,8 @@ pub async fn rall(
         ctx.say("Cannot remove the everyone role from everyone").await?;
         return Ok(())
     }
-    else if role.position >= 
-        highest_role(&ctx, &ctx.author_member().await.unwrap()).position {
-        ctx.say("Cannot assign role higher than your highest role")
+    if role.position >= highest_role(&ctx, &ctx.author_member().await.unwrap()).position {
+        ctx.say("Cannot rall role higher than your highest role")
         .await?;
         return Ok(())
     }
@@ -356,6 +307,11 @@ pub async fn edit(
     #[description = "Colo(u)r of the role"] colour: Option<String>,
     #[description = "Whether the role should be hoisted"] hoisted: Option<bool>,
 ) -> Result<(), Error> {
+    let highest_role = highest_role(&ctx, &ctx.author_member().await.unwrap());
+    if role.position >= highest_role.position {
+        ctx.say("Cannot edit role higher than your highest role").await?;
+        return Ok(());
+    }
     let colour = colour.unwrap_or_else(|| String::from("000000"));
     let hex: serenity::Colour;
     let colour_: &str;
