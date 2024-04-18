@@ -6,13 +6,16 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.68"
-poise = "0.6.1"
-shuttle-runtime = "0.39.0"
-shuttle-secrets = "0.39.0"
+poise = { git ="https://github.com/serenity-rs/poise/", branch = "next"}
+shuttle-runtime = "0.42.0"
+shuttle-secrets = "0.42.0"
 # Since poise is a serenity command framework, it can run on Shuttle with shuttle-serenity
-shuttle-serenity = "0.39.0"
+shuttle-serenity = "0.42.0"
+shuttle-shared-db = { version = "0.42.0", features = ["postgres", "sqlx"]}
 tracing = "0.1.37"
 tokio = "1.26.0"
 once_cell = "1.19.0"
 humantime = "2.1.0"
 regex = "1.10.3"
+sqlx = "0.7"
+
