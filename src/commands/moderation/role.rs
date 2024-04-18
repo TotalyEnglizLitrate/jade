@@ -267,7 +267,7 @@ pub async fn rall(
         for member in &members_with_role {
             match member.remove_role(&ctx.http(), &role.id).await {
                 Err(_) => fail += 1,
-                Ok(_) => fail += 0
+                Ok(_) => fail = fail
             }
         }
         msg.edit(
