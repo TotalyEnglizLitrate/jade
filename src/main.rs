@@ -3,17 +3,22 @@ use anyhow::Context as _;
 use poise::serenity_prelude::{ClientBuilder, GatewayIntents};
 use shuttle_secrets::SecretStore;
 use shuttle_serenity::ShuttleSerenity;
+use sqlx;
 
 pub mod commands;
 pub struct Data {
-    pub start_time: std::time::SystemTime
+    pub start_time: std::time::SystemTime,
+    pub db: sqlx::PgPool
 } // User data, which is stored and accessible in all command invocations
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
 
 #[shuttle_runtime::main]
-async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> ShuttleSerenity {
+async fn main(
+    #[shuttle_secrets::Secrets] secret_store: SecretStore,
+    #[shuttle_shared_db::Postgres] pool: sqlx::PgPool
+    ) -> ShuttleSerenity {
     // Get the discord token set in `Secrets.toml`
     let discord_token = secret_store
         .get("DISCORD_TOKEN")
@@ -24,6 +29,7 @@ async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> ShuttleS
             commands: vec![
                 commands::misc::ping(),
                 commands::misc::help(),
+                commands::misc::dm(),
                 commands::moderation::user::timeout(),
                 commands::moderation::user::untimeout(),
                 commands::moderation::user::ban(),
@@ -41,11 +47,16 @@ async fn main(#[shuttle_secrets::Secrets] secret_store: SecretStore) -> ShuttleS
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {
-            Box::pin(async move {
-                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data {start_time: SystemTime::now()})
-            })
-        })
+            Box::pin(
+                async move {
+                    poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                    Ok(
+                        Data {
+                            start_time: SystemTime::now(),
+                            db: pool
+                        })
+                    })
+                })
         .build();
 
     let client = ClientBuilder::new(
